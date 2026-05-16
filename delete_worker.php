@@ -1,19 +1,30 @@
 <?php
 include 'db_connection.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    if (isset($_GET['id'])) {
-        $id = $_GET['id'];
-        $stmt = $pdo->prepare("DELETE FROM trydyaga WHERE id = :id");
-        if ($stmt->execute(['id' => $id])) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['success' => false]);
-        }
-    } else {
-        echo json_encode(['success' => false]);
-    }
-} else {
-    echo json_encode(['success' => false]);
+header('Content-Type: application/json');
+
+$id = $_GET['id'] ?? null;
+
+if (!$id) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'ID не передан'
+    ]);
+    exit;
+}
+
+try {
+    $stmt = $pdo->prepare("DELETE FROM trydyaga WHERE id = :id");
+    $stmt->execute(['id' => $id]);
+
+    echo json_encode([
+        'success' => true
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
 }
 ?>
