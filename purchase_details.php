@@ -1,79 +1,80 @@
+<?php
+include __DIR__ . '/db_connection.php';
+
+$sql = "
+SELECT 
+    c.id,
+    c.all_sum,
+    c.date_buy,
+    c.id_pokypatelya,
+    c.id_trydyaga,
+    l.name_drug
+FROM chek c
+LEFT JOIN tovarcheka t ON c.id = t.id_cheka
+LEFT JOIN lekarstvo l ON t.id_lekarstva = l.id
+ORDER BY c.id
+";
+
+$stmt = $pdo->query($sql);
+$data = $stmt->fetchAll();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Details</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
+        body { font-family: Arial; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #f2f2f2; }
     </style>
 </head>
 <body>
-    <h1>Purchase Details</h1>
-    <a href="index.php">Back to Home</a>
+
+<h1>Purchase Details</h1>
+<a href="index.php">Back to Home</a>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Total Sum</th>
+        <th>Date</th>
+        <th>Customer ID</th>
+        <th>Worker ID</th>
+        <th>Medicines</th>
+    </tr>
+
     <?php
-    include 'db_connection.php';
+    $grouped = [];
 
-    // Fetch purchase details
-    $stmt = $pdo->query("SELECT * FROM chek");
-    $cheks = $stmt->fetchAll();
+    foreach ($data as $row) {
+        $id = $row['id'];
 
-    if ($cheks) {
-        echo "<table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Total Sum</th>
-                        <th>Date of Purchase</th>
-                        <th>Customer ID</th>
-                        <th>Pharmacist ID</th>
-                        <th>Medications</th>
-                    </tr>
-                </thead>
-                <tbody>";
-        foreach ($cheks as $chek) {
-            // Fetch medications for each purchase
-            $stmtTovarcheka = $pdo->prepare("SELECT * FROM tovarcheka WHERE id_cheka = :id_cheka");
-            $stmtTovarcheka->execute(['id_cheka' => $chek['id']]);
-            $tovarchekas = $stmtTovarcheka->fetchAll();
-
-            $medications = [];
-            foreach ($tovarchekas as $tovarcheka) {
-                $stmtLekarstvo = $pdo->prepare("SELECT name_drug FROM lekarstvo WHERE id = :id_lekarstva");
-                $stmtLekarstvo->execute(['id_lekarstva' => $tovarcheka['id_lekarstva']]);
-                $medication = $stmtLekarstvo->fetch();
-                if ($medication) {
-                    $medications[] = htmlspecialchars($medication['name_drug']);
-                }
-            }
-
-            echo "<tr>
-                    <td>" . htmlspecialchars($chek['id']) . "</td>
-                    <td>" . htmlspecialchars($chek['all_sum']) . "</td>
-                    <td>" . htmlspecialchars($chek['date_buy']) . "</td>
-                    <td>" . htmlspecialchars($chek['id_pokypatelya']) . "</td>
-                    <td>" . htmlspecialchars($chek['id_trydyaga']) . "</td>
-                    <td>" . implode(', ', $medications) . "</td>
-                  </tr>";
+        if (!isset($grouped[$id])) {
+            $grouped[$id] = $row;
+            $grouped[$id]['medicines'] = [];
         }
-        echo "</tbody></table>";
-    } else {
-        echo "No purchase details found.";
+
+        if ($row['name_drug']) {
+            $grouped[$id]['medicines'][] = $row['name_drug'];
+        }
     }
+
+    foreach ($grouped as $chek):
     ?>
+        <tr>
+            <td><?= $chek['id'] ?></td>
+            <td><?= $chek['all_sum'] ?></td>
+            <td><?= $chek['date_buy'] ?></td>
+            <td><?= $chek['id_pokypatelya'] ?></td>
+            <td><?= $chek['id_trydyaga'] ?></td>
+            <td><?= implode(', ', $chek['medicines']) ?></td>
+        </tr>
+    <?php endforeach; ?>
+
+</table>
+
 </body>
 </html>
