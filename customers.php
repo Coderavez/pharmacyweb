@@ -2,149 +2,117 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customers</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .form-container {
-            margin-bottom: 20px;
-        }
-        .form-container input[type="text"],
-        .form-container input[type="email"] {
-            padding: 5px;
-            width: 300px;
-        }
-        .form-container input[type="submit"] {
-            padding: 5px 10px;
-        }
-        .form-container input[type="hidden"] {
-            display: none;
-        }
-        .form-container button {
-            padding: 5px 10px;
-            margin-left: 5px;
-        }
+        body { font-family: Arial; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #f2f2f2; }
+        input { padding: 5px; margin: 5px; }
     </style>
 </head>
 <body>
-    <h1>Customers</h1>
-    <a href="index.php">Back to Home</a>
 
-    <!-- Form for adding and editing customers -->
-    <div class="form-container">
-        <form id="customerForm" method="post" action="">
-            <input type="hidden" name="id" id="id" value="">
-            <input type="text" name="name" id="name" placeholder="Name" required>
-            <input type="text" name="phone" id="phone" placeholder="Phone" required>
-            <input type="email" name="email" id="email" placeholder="Email" required>
-            <input type="submit" value="Save">
-            <button type="button" onclick="resetForm()">Cancel</button>
-        </form>
-    </div>
+<h1>Customers</h1>
+<a href="index.php">Back</a>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            include 'db_connection.php';
+<?php
+include 'db_connection.php';
 
-            // Handle form submission
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $id = $_POST['id'] ?? null;
-                $name = $_POST['name'];
-                $phone = $_POST['phone'];
-                $email = $_POST['email'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-                if ($id) {
-                    // Update customer
-                    $stmt = $pdo->prepare("UPDATE pokypatelya SET name = :name, phone = :phone, email = :email WHERE id = :id");
-                    $stmt->execute(['id' => $id, 'name' => $name, 'phone' => $phone, 'email' => $email]);
-                } else {
-                    // Insert new customer
-                    $stmt = $pdo->prepare("INSERT INTO pokypatelya (name, phone, email) VALUES (:name, :phone, :email)");
-                    $stmt->execute(['name' => $name, 'phone' => $phone, 'email' => $email]);
-                }
+    $id = $_POST['id'] ?? null;
+    $name = $_POST['name_shoper'];
+    $number = $_POST['number'];
+    $password = $_POST['password'];
 
-                header('Location: customers.php');
-                exit;
-            }
+    if ($id) {
+        $stmt = $pdo->prepare("
+            UPDATE pokypatel
+            SET name_shoper = :name, number = :number, password = :password
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            'id' => $id,
+            'name' => $name,
+            'number' => $number,
+            'password' => $password
+        ]);
+    } else {
+        $stmt = $pdo->prepare("
+            INSERT INTO pokypatel (name_shoper, number, password)
+            VALUES (:name, :number, :password)
+        ");
+        $stmt->execute([
+            'name' => $name,
+            'number' => $number,
+            'password' => $password
+        ]);
+    }
 
-            // Fetch customers
-            $stmt = $pdo->query("SELECT * FROM pokypatelya");
-            $customers = $stmt->fetchAll();
+    header("Location: customers.php");
+    exit;
+}
 
-            if ($customers) {
-                foreach ($customers as $customer) {
-                    echo "<tr>
-                            <td>" . htmlspecialchars($customer['id']) . "</td>
-                            <td>" . htmlspecialchars($customer['name']) . "</td>
-                            <td>" . htmlspecialchars($customer['phone']) . "</td>
-                            <td>" . htmlspecialchars($customer['email']) . "</td>
-                            <td>
-                                <button onclick='editCustomer(" . htmlspecialchars($customer['id']) . ")'>Edit</button>
-                                <button onclick='deleteCustomer(" . htmlspecialchars($customer['id']) . ")'>Delete</button>
-                            </td>
-                          </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='5'>No customers found.</td></tr>";
-            }
-            ?>
-        </tbody>
-    </table>
+$stmt = $pdo->query("SELECT * FROM pokypatel");
+$customers = $stmt->fetchAll();
+?>
 
-    <script>
-        function editCustomer(id) {
-            fetch('get_customer.php?id=' + id)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('id').value = data.id;
-                    document.getElementById('name').value = data.name;
-                    document.getElementById('phone').value = data.phone;
-                    document.getElementById('email').value = data.email;
-                });
-        }
+<!-- FORM -->
+<form method="post">
+    <input type="hidden" name="id" id="id">
 
-        function deleteCustomer(id) {
-            if (confirm('Are you sure you want to delete this customer?')) {
-                fetch('delete_customer.php?id=' + id, {
-                    method: 'DELETE'
-                }).then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert('Error deleting customer');
-                    }
-                });
-            }
-        }
+    <input type="text" name="name_shoper" id="name_shoper" placeholder="Name" required>
+    <input type="text" name="number" id="number" placeholder="Phone" required>
+    <input type="text" name="password" id="password" placeholder="Password" required>
 
-        function resetForm() {
-            document.getElementById('customerForm').reset();
-            document.getElementById('id').value = '';
-        }
-    </script>
+    <button type="submit">Save</button>
+    <button type="button" onclick="resetForm()">Cancel</button>
+</form>
+
+<!-- TABLE -->
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Number</th>
+        <th>Password</th>
+        <th>Actions</th>
+    </tr>
+
+    <?php foreach ($customers as $c): ?>
+        <tr>
+            <td><?= $c['id'] ?></td>
+            <td><?= htmlspecialchars($c['name_shoper']) ?></td>
+            <td><?= htmlspecialchars($c['number']) ?></td>
+            <td><?= htmlspecialchars($c['password']) ?></td>
+            <td>
+                <button onclick="editCustomer(
+                    <?= $c['id'] ?>,
+                    '<?= $c['name_shoper'] ?>',
+                    '<?= $c['number'] ?>',
+                    '<?= $c['password'] ?>'
+                )">Edit</button>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</table>
+
+<script>
+function editCustomer(id, name, number, password) {
+    document.getElementById('id').value = id;
+    document.getElementById('name_shoper').value = name;
+    document.getElementById('number').value = number;
+    document.getElementById('password').value = password;
+}
+
+function resetForm() {
+    document.getElementById('id').value = "";
+    document.getElementById('name_shoper').value = "";
+    document.getElementById('number').value = "";
+    document.getElementById('password').value = "";
+}
+</script>
+
 </body>
 </html>
